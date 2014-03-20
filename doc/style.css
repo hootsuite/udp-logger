@@ -1,0 +1,38 @@
+html {
+	font-family: helvetica, Verdana, sans;
+	background: url(img/black-lion.png);
+	background-size: 50%;
+	background-position: 50% 50%;
+	background-attachment: fixed;
+	background-repeat: no-repeat;
+	margin: 0;
+}
+
+body {
+	width: 60%;
+	margin: 0 auto;
+	padding: 2em;
+	background: rgba(255,255,255,0.8);
+}
+
+code {
+	font-family: Menlo, Monaco, courier, monospace;
+	color: #666;
+}
+
+pre {
+	font-size: 0.8em;
+	background: rgba(255,255,255,0.5);
+	width: 90%;
+	padding: 2em 0 2em 10%;
+}
+
+li {
+	line-height: 1.5;
+}
+
+a {
+	font-weight: bold;
+	text-decoration: none;
+	color: #111;
+}

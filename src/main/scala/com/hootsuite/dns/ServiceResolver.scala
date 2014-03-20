@@ -1,6 +1,6 @@
 package com.hootsuite.dns
 
-import org.xbill.DNS.{Cache,Lookup,Name,Type,Credibility,SRVRecord}
+import org.xbill.DNS._
 
 /**
  * Provides name resolution of services through SRV records.

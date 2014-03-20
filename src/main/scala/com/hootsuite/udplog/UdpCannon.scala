@@ -1,6 +1,7 @@
 package com.hootsuite.udplog
 
 import java.net.{InetSocketAddress,DatagramPacket,DatagramSocket}
+
 /**
  * A dumb as bricks UDP client.
  */

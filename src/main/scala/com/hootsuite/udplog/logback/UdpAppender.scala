@@ -1,54 +1,52 @@
 package com.hootsuite.udplog.logback
 
 import ch.qos.logback.core.AppenderBase
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder
-import ch.qos.logback.classic.spi.ILoggingEvent
-
-import com.typesafe.config.ConfigFactory
+import ch.qos.logback.core.Layout
 
 import com.hootsuite.dns.SrvResolver
 import com.hootsuite.udplog.UdpCannon
 
-import util.control.NonFatal
+/**
+ * Appender that fires logging events to a UDP address.
+ *
+ * This should be configured with a layout in logback XML.
+ */
+class UdpAppender[T] extends AppenderBase[T] {
 
+  // UDP and SRV support.
+  private val cannon = UdpCannon
+  private val resolver = new SrvResolver
 
-class UdpAppender(var encoder: PatternLayoutEncoder) extends AppenderBase[ILoggingEvent] {
+  // XML configuration support.
+  private var configLayout: Layout[T] = null
+  def setLayout(layout: Layout[T]) = { configLayout = layout }
+  def getLayout = configLayout
 
-  def UdpAppender() = new UdpAppender(null)
+  private var configServiceName: String = null
+  def setService(name: String) = { configServiceName = name }
+  def getService = configServiceName
 
-  val config = ConfigFactory.load
-  val cannon = UdpCannon
-  val resolver = new SrvResolver
+  // this will only be referenced after config properties
+  // are checked by start(), but
+  // ensures they are fixed once set.
+  private lazy val layout = configLayout
+  private lazy val serviceName = configServiceName
 
-
-  // our encoder is set up to send to this stream.
-  // we mutate it, and synchronize access :(
-  val stream = new java.io.ByteArrayOutputStream
-
-  val serviceName = "_logback._udp.hootsuite.com"
-
-  override def start {
-    if (this.encoder == null) {
-      addError("No encoder set for %s" format(name))
-    } else try {
-      encoder.init(stream)
-    } catch {
-      case NonFatal(e) => addError("Error during initialization: " format e.getMessage)
-    }
-
+  override def start() {
+    if (configLayout == null) addError("No layout set for %s" format(name))
+    if (configServiceName == null) addError("No service set for %s" format(name))
+    super.start()
   }
 
-  def append(event: ILoggingEvent) {
-    val bytes = synchronized {
-      encoder.doEncode(event)
-      val bytes = stream.toByteArray
-      stream.reset
-      bytes
-    }
-    resolver lookup(serviceName) match { // TODO expose to config
-      case Right((host: String, port: Int)) =>
-        println("Sending [%s] to %s:%s" format(new String(bytes), host, port))
+  def append(event: T) {
+    val bytes = layout.doLayout(event).getBytes("UTF-8")
+    resolver lookup(serviceName) match {
+
+      case Right((name: String, port: Int)) =>
+        val host = name.substring(0, name.length - 1)
+//        addInfo("Sending [%s] to %s:%s" format(new String(bytes), host, port))
         cannon(host, port, bytes)
+
       case Left(error) =>
         addError(error)
     }
